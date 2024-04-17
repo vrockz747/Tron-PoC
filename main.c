@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include "./nanopb/pb_decode.h"
-#include "proto/tron.pb.h"
+#include "./proto/tron.pb.h"
 #include <string.h>
 #include "sha2.h"
 #include "secp256k1.h"
 #include "ecdsa.h"
+#include "./proto/Contract.pb.h"
 
 
 //https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
@@ -14,6 +15,7 @@ void hexStringToByteArray(const char *hexString, uint8_t *byteArray, size_t byte
         sscanf(hexString + 2 * i, "%2hhx", &byteArray[i]);
     }
 }
+void extract_contract_info(protocol_Transaction_raw* transaction_raw);
 
 int main() {
     const ecdsa_curve mycurve = secp256k1;
@@ -21,7 +23,7 @@ int main() {
     const curve_point *G = &(mycurveptr->G);
 
     // Hex string from your raw_data_hex
-    const char *hexData = "0a020d9f220898db5757485586b540c8dc9cb6ee315a65080112610a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412300a1541fd49eda0f23ff7ec1d03b52c3a45991c24cd440e12154198927ffb9f554dc4a453c64b2e553a02d6df514b1822709b8d99b6ee31";
+    const char *hexData = "0a0271392208d291dee52544509340e8d39598f72f5a58080b12540a32747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e467265657a6542616c616e6365436f6e7472616374121e0a15411fafb1e96dfe4f609e2259bfaf8c77b60c535b9310a0968001180370a7939298f72f";
     size_t hexDataLength = strlen(hexData) / 2;
     
     uint8_t buffer[hexDataLength];
@@ -50,7 +52,7 @@ int main() {
     sha256_Raw(buffer,hexDataLength,hash);
 
     //PvtKey:
-    const char *phex= "b81bd3e840f624f1ebda1c9572e2e2653ce3b1008aa99489f30e90ada64047c0";
+    const char *phex= "33fe9187089d4bf319de2e50889eba5f7e7e084b03edbb827600a765ce8ccb3d";
     size_t plen = strlen(phex) / 2;
     uint8_t pvkey[plen];
 
@@ -65,6 +67,31 @@ int main() {
     for(int i =0;i<plen;i++){
         printf("%02x",sig[i]);
     }
-    return 0;
+    
+    extract_contract_info(&transaction);
+}
+
+
+void extract_contract_info(protocol_Transaction_raw* transaction_raw) {
+    if (transaction_raw->contract_count > 0) {
+        protocol_Transaction_Contract contract = transaction_raw->contract[0];  // Example for the first contract
+
+        // Check the type of contract and process accordingly
+        switch (contract.type) {
+            case protocol_Transaction_Contract_ContractType_TransferContract:
+                google_protobuf_Any *any = &contract.parameter;
+
+                //pb_istream_t stream = pb_istream_from_buffer(any->value, sizeof(protocol_TransferContract));
+                protocol_TransferContract transfer_contract = protocol_TransferContract_init_default;
+                if (pb_decode((pb_istream_t *)&any->value, protocol_TransferContract_fields, &transfer_contract)) {
+                    // Access fields from transfer_contract, e.g., transfer_contract.to_address
+                    printf("\nAddress Decoded!");
+                    break;
+                }
+            default:
+                    printf("\nAddress Decoding Failed!");
+        }
+        
+    }
 }
 

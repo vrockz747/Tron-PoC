@@ -102,6 +102,7 @@ SRCS  += slip39.c
 CSRC  = main.c                   # The main program
 CSRC += ./proto/tron.pb.c                # The compiled protocol definition
 CSRC += ./proto/any.pb.c                # The compiled protocol definition
+CSRC += ./proto/Contract.pb.c
 #CSRC += ./trezor-crypto/secp256k1.c                # The compiled protocol definition
 #CSRC += ./trezor-crypto/sha2.c
 #CSRC += ./trezor-crypto/memzero.c
@@ -190,4 +191,8 @@ tron.pb.c: tron.proto
 	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. tron.proto
 
 any.pb.c: any.proto
+	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. any.proto
+
+
+Contract.pb.c: Contract.proto
 	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. any.proto
