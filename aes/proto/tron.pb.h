@@ -3,7 +3,7 @@
 
 #ifndef PB_PROTOCOL_CORE_TRON_PB_H_INCLUDED
 #define PB_PROTOCOL_CORE_TRON_PB_H_INCLUDED
-#include "../nanopb/pb.h"
+#include <pb.h>
 #include "any.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
