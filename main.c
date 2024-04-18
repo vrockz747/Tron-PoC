@@ -8,8 +8,6 @@
 #include "./proto/Contract.pb.h"
 
 
-//https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
-
 void hexStringToByteArray(const char *hexString, uint8_t *byteArray, size_t byteArrayLength) {
     for (size_t i = 0; i < byteArrayLength; i++) {
         sscanf(hexString + 2 * i, "%2hhx", &byteArray[i]);
@@ -23,12 +21,10 @@ int main() {
     const curve_point *G = &(mycurveptr->G);
 
     // Hex string from your raw_data_hex
-    const char *hexData = "0a0271392208d291dee52544509340e8d39598f72f5a58080b12540a32747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e467265657a6542616c616e6365436f6e7472616374121e0a15411fafb1e96dfe4f609e2259bfaf8c77b60c535b9310a0968001180370a7939298f72f";
+    const char *hexData = "0a02d9b32208f65e5d28c619bb7340b899db81ef315a66080112620a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412310a1541fd49eda0f23ff7ec1d03b52c3a45991c24cd440e12154198927ffb9f554dc4a453c64b2e553a02d6df514b18cd3770f3d3d781ef31";
     size_t hexDataLength = strlen(hexData) / 2;
     
-    uint8_t buffer[hexDataLength];
-
-    hexStringToByteArray(hexData, buffer, hexDataLength);
+    uint8_t buffer[hexDataLength];hexStringToByteArray(hexData, buffer, hexDataLength);
 
     for(int i =0;i<hexDataLength;i++){
         //printf("%02x",buffer[i]);
@@ -46,7 +42,7 @@ int main() {
         printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
         return 1;
     }
-    printf("Decoding succeeded.\n");
+    //printf("Decoding succeeded.\n");
     uint8_t hash[SHA256_DIGEST_LENGTH] = {0};
     //hash the raw data
     sha256_Raw(buffer,hexDataLength,hash);
@@ -65,7 +61,7 @@ int main() {
     ecdsa_sign_digest(&mycurve,pvkey,hash,sig,NULL,NULL);
 
     for(int i =0;i<plen;i++){
-        printf("%02x",sig[i]);
+        //printf("%02x",sig[i]);
     }
     
     extract_contract_info(&transaction);
@@ -76,22 +72,44 @@ void extract_contract_info(protocol_Transaction_raw* transaction_raw) {
     if (transaction_raw->contract_count > 0) {
         protocol_Transaction_Contract contract = transaction_raw->contract[0];  // Example for the first contract
 
-        // Check the type of contract and process accordingly
+        protocol_TransferContract transfer_contract;// = protocol_TransferContract_init_default;
+        
+         //Check the type of contract and process accordingly
         switch (contract.type) {
             case protocol_Transaction_Contract_ContractType_TransferContract:
-                google_protobuf_Any *any = &contract.parameter;
+                google_protobuf_Any any = contract.parameter;
+                pb_istream_t stream = pb_istream_from_buffer(any.value.bytes, any.value.size);
 
-                //pb_istream_t stream = pb_istream_from_buffer(any->value, sizeof(protocol_TransferContract));
-                protocol_TransferContract transfer_contract = protocol_TransferContract_init_default;
-                if (pb_decode((pb_istream_t *)&any->value, protocol_TransferContract_fields, &transfer_contract)) {
+                int status = pb_decode(&stream, protocol_TransferContract_fields, &transfer_contract);
+                if (status) {
                     // Access fields from transfer_contract, e.g., transfer_contract.to_address
-                    printf("\nAddress Decoded!");
-                    break;
+                    printf("Address Decoded!");
                 }
-            default:
+                else{
                     printf("\nAddress Decoding Failed!");
+
+                }
+                //pb_istream_t stream = pb_istream_from_buffer(any->value, sizeof(protocol_TransferContract));     
+            default:
         }
         
+
+        printf("\nAmount: %li :",transfer_contract.amount);
+        printf("\nOwner Address: ");
+        for(int i =0;i<sizeof(transfer_contract.owner_address);i++){
+            printf("%02x",(uint8_t)transfer_contract.owner_address[i]);
+        }
+        printf("\nTo Address: ");
+        for(int i =0;i<sizeof(transfer_contract.to_address);i++){
+            printf("%02x",(uint8_t)transfer_contract.to_address[i]);
+        }
+
+    //"41fd49eda0f23ff7ec1d03b52c3a45991c24cd440e"
+
     }
 }
+
+
+// https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
+// https://github.com/LedgerHQ/app-tron/blob/6a86b1147a5ffa4c52ed9eb38e5590d2cf91eefc/proto/core/Tron.proto
 

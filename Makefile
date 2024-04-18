@@ -193,6 +193,5 @@ tron.pb.c: tron.proto
 any.pb.c: any.proto
 	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. any.proto
 
-
 Contract.pb.c: Contract.proto
 	$(PROTOC) $(PROTOC_OPTS) --nanopb_out=. any.proto
