@@ -84,13 +84,48 @@ int main() {
         printf("\nv value: %i\n",v_value);
         uint8_t public_key[65]; //""
         ecdsa_recover_pub_from_sig(&mycurve,public_key,sig,hash_demo,v_value);
-        printf("Uncomp. Public Key: ");
+        printf("Uncomp. Public Key: "); //04a5bb3b28466f578e6e93fbfd5f75cee1ae86033aa4bbea690e3312c087181eb366f9a1d1d6a437a9bf9fc65ec853b9fd60fa322be3997c47144eb20da658b3d1
         for(int i =0;i<65;i++){
-            printf("%02x",public_key[i]);
+            //printf("%02x",public_key[i]);
         }
+
+        printf("\n");
+
+        // gen Address:
+        uint8_t initial_address[1 + 20] = {0}; //initial address
+        initial_address[0] = 0x41;
+        //hash pubkey using sha3-256
+        uint8_t hashed_pubkey[32];
+        #define USE_KECCAK 1
+        sha3_256(public_key,65,hashed_pubkey);
+
+        // extract last 20 bytes
+        // address = 41||sha3[12,32)
+        printf("%02x",initial_address[0]);
+        for(int i = 12;i < 32;i++){
+            initial_address[i - 12 + 1] = hashed_pubkey[i];
+            printf("%02x",initial_address[i-12+1]);
+        }
+
+        // Test Addr:https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
+        //const char *test_init_addr = "415a523b449890854c8fc460ab602df9f31fe4293f";
+
+        const char *init_addr_str = "415a523b449890854c8fc460ab602df9f31fe4293f";
+        hexStringToByteArray(init_addr_str,initial_address,21);
+
+        // sha256(address) x 2
+        char main_address[35];
+        int status = base58_encode_check(initial_address, 1 + 20, HASHER_SHA2D, main_address,35);
+        printf("\n");
+        for(int i =0;i<34;i++){
+            printf("%c",main_address[i]);
+        }
+
     }
 
     printf("\n");
+
+    
 
 }
 
@@ -147,7 +182,7 @@ void generateAddress(const uint8_t *seed, const uint32_t *path, uint32_t path_le
     //memzero(&node, sizeof(HDNode));
     
     // gen Address:
-    uint8_t initial_address[1 + 20 + 4] = {0}; //initial address
+    uint8_t initial_address[1 + 20] = {0}; //initial address
     initial_address[0] = 41;
     //hash pubkey using sha3-256
     uint8_t hashed_pubkey[32];
@@ -159,17 +194,13 @@ void generateAddress(const uint8_t *seed, const uint32_t *path, uint32_t path_le
     for(int i = 12;i < 32;i++){
         initial_address[i - 12 + 1] = hashed_pubkey[i];
     }
-    // sha256(address) x 2
-    uint8_t hash_address[SHA256_DIGEST_LENGTH];
-    sha256_Raw(initial_address,21,hash_address);
-    sha256_Raw(hash_address,32,hash_address);
-    
-    // checkSum = sha256_1[0, 4):
-    for(int i = 32; i<36; i++){
-        initial_address[i] = hash_address[i - 32];
-    }
 
-    base58_encode_check(initial_address,)
+    // Test Addr:https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
+    //const char *test_init_addr = "415a523b449890854c8fc460ab602df9f31fe4293f";
+
+    // sha256(address) x 2
+    char main_address[34];
+    base58_encode_check(initial_address, 1 + 20, HASHER_SHA2D, main_address,34);
 }
 
 bool derive_hdnode_from_path(const uint32_t *path,
