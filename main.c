@@ -21,7 +21,7 @@ int main() {
     const curve_point *G = &(mycurveptr->G);
 
     // Hex string from your raw_data_hex
-    const char *hexData = "0a02d9b32208f65e5d28c619bb7340b899db81ef315a66080112620a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412310a1541fd49eda0f23ff7ec1d03b52c3a45991c24cd440e12154198927ffb9f554dc4a453c64b2e553a02d6df514b18cd3770f3d3d781ef31";
+    const char *hexData = "0a02dc2a220810bfeb129a05639f40809ad082ef315a66080112620a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412310a1541fd49eda0f23ff7ec1d03b52c3a45991c24cd440e12154198927ffb9f554dc4a453c64b2e553a02d6df514b18ad2c7097d6cc82ef31";
     size_t hexDataLength = strlen(hexData) / 2;
     
     uint8_t buffer[hexDataLength];hexStringToByteArray(hexData, buffer, hexDataLength);
@@ -47,23 +47,38 @@ int main() {
     //hash the raw data
     sha256_Raw(buffer,hexDataLength,hash);
 
-    //PvtKey:
-    const char *phex= "33fe9187089d4bf319de2e50889eba5f7e7e084b03edbb827600a765ce8ccb3d";
+    //PvtKey:https://github.com/tronprotocol/Documentation/blob/master/English_Documentation/Procedures_of_transaction_signature_generation.md
+    const char *phex= "8e812436a0e3323166e1f0e8ba79e19e217b2c4a53c970d4cca0cfb1078979df";
     size_t plen = strlen(phex) / 2;
     uint8_t pvkey[plen];
 
     hexStringToByteArray(phex,pvkey,plen);
 
-    for(int i =0;i<plen;i++){
-    //    printf("%02x",pvkey[i]);
+    const char *hash_demo_hex = "159817a085f113d099d3d93c051410e9bfe043cc5c20e43aa9a083bf73660145";
+    uint8_t hash_demo[32];
+    hexStringToByteArray(hash_demo_hex,hash_demo,32);
+
+    for(int i =0;i<SHA256_DIGEST_LENGTH;i++){
+        //printf("%02x",hash[i]);
     }
     uint8_t sig[64];
-    ecdsa_sign_digest(&mycurve,pvkey,hash,sig,NULL,NULL);
+    uint8_t v_value = 0;
+    ecdsa_sign_digest(&mycurve,pvkey,hash_demo,sig,&v_value,NULL);
 
-    for(int i =0;i<plen;i++){
-        //printf("%02x",sig[i]);
+    printf("\nr value: ");
+    for(int i =0;i<64;i++){
+        printf("%02x",sig[i]);
+        if (i == 31 ) printf("\ns value: ");
+
     }
-    
+    printf("\nv value: %i\n",v_value);
+    uint8_t public_key[65]; //""
+    ecdsa_recover_pub_from_sig(&mycurve,public_key,sig,hash_demo,v_value);
+    printf("Uncomp. Public Key: ");
+    for(int i =0;i<65;i++){
+        printf("%02x",public_key[i]);
+    }
+    printf("\n");
     extract_contract_info(&transaction);
 }
 
@@ -104,7 +119,7 @@ void extract_contract_info(protocol_Transaction_raw* transaction_raw) {
             printf("%02x",(uint8_t)transfer_contract.to_address[i]);
         }
 
-    //"41fd49eda0f23ff7ec1d03b52c3a45991c24cd440e"
+
 
     }
 }
