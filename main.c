@@ -81,13 +81,16 @@ int main() {
             if (i == 31 ) printf("\ns value: ");
 
         }
+        // Address Vfxn: https://secretscan.org/PrivateKeyTron
         printf("\nv value: %i\n",v_value);
         uint8_t public_key[65]; //""
-        ecdsa_recover_pub_from_sig(&mycurve,public_key,sig,hash_demo,v_value);
+        ecdsa_recover_pub_from_sig(&mycurve, public_key, sig, hash_demo, v_value);
         printf("Uncomp. Public Key: "); //04a5bb3b28466f578e6e93fbfd5f75cee1ae86033aa4bbea690e3312c087181eb366f9a1d1d6a437a9bf9fc65ec853b9fd60fa322be3997c47144eb20da658b3d1
         for(int i =0;i<65;i++){
             //printf("%02x",public_key[i]);
         }
+        //uint8_t public_key_xy[64]; //""
+        //memcpy(public_key_xy, &public_key[1], 64);
 
         printf("\n");
 
@@ -96,8 +99,12 @@ int main() {
         initial_address[0] = 0x41;
         //hash pubkey using sha3-256
         uint8_t hashed_pubkey[32];
-        #define USE_KECCAK 1
-        sha3_256(public_key,65,hashed_pubkey);
+
+        keccak_256(&public_key[1],64,hashed_pubkey);
+        for(int i =0;i<32;i++){
+            printf("%02x",hashed_pubkey[i]);
+        }
+                printf("\n");
 
         // extract last 20 bytes
         // address = 41||sha3[12,32)
@@ -110,8 +117,8 @@ int main() {
         // Test Addr:https://github.com/tronprotocol/Documentation/blob/master/TRX/Tron-overview.md#6-user-address-generation
         //const char *test_init_addr = "415a523b449890854c8fc460ab602df9f31fe4293f";
 
-        const char *init_addr_str = "415a523b449890854c8fc460ab602df9f31fe4293f";
-        hexStringToByteArray(init_addr_str,initial_address,21);
+        //const char *init_addr_str = "4198927ffb9f554dc4a453c64b2e553a02d6df514b";
+        //hexStringToByteArray(init_addr_str,initial_address,21);
 
         // sha256(address) x 2
         char main_address[35];
@@ -124,7 +131,6 @@ int main() {
     }
 
     printf("\n");
-
     
 
 }
@@ -134,7 +140,7 @@ void extract_contract_info(protocol_Transaction_raw* transaction_raw) {
     if (transaction_raw->contract_count > 0) {
         protocol_Transaction_Contract contract = transaction_raw->contract[0];  // Example for the first contract
 
-        protocol_TransferContract transfer_contract;// = protocol_TransferContract_init_default;
+        protocol_TransferContract transfer_contract = protocol_TransferContract_init_default;
         
          //Check the type of contract and process accordingly
         switch (contract.type) {
